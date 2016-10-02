@@ -1,25 +1,173 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "week2ex"
+author: "Nicholas Metaxas"
+date: "Saturday, October 01, 2016"
+output: html_document
 ---
 
+##Assignment for Week 2 coursera course Reproducible Research 
 
-## Loading and preprocessing the data
+##Part 1
+Loading and preprocessing the data
+
+```{r loadprocess, echo=TRUE}
+
+setwd("C:/Users/NMetaxas/Desktop/Coursera/5. Reproducible Research/week2")
+
+rawd <- read.csv("activity.csv")
+
+# see dimensions, names of columns and structure of the dataset
+dim(rawd)
+names(rawd)
+str(rawd)
+
+# dates seems to be off, transform from factors to dates
+
+rawd$date <- as.Date(rawd$date)
+
+```
+
+##Part 2
+Calculate total steps per day  
+Plot histogram  
+Report mean and median  
+
+```{r meansteps, echo=TRUE}
+
+steps_per_day <- tapply(rawd$steps,rawd$date ,sum)
+print(as.table(steps_per_day),type="html")
+
+# plot historgram with 10 intervals
+hist(steps_per_day,10,col="red")
+
+# calculate mean and median
+mean_steps <- mean(steps_per_day,na.rm=TRUE)
+median_steps <- median(steps_per_day,na.rm=TRUE)
+```
+
+Mean steps per day is `r mean_steps`.   
+Median steps per day is `r median_steps`.  
+
+##Part 3
+Plot steps for each 5 minute interval  
+Find max steps interval  
+
+
+```{r interval, echo=TRUE}
+# get sum of steps per interval for all days
+steps_per_interval <- (tapply(rawd$steps,rawd$interval ,mean ,na.rm=TRUE))
+
+# plot pattern
+
+plot(y=steps_per_interval,x=names(steps_per_interval), type="l",
+     xlab="5-minute intervals",ylab="steps per interval")
+title("Steps pattern per interval - Mean across all days")
+
+# get max
+max_interval <- names(which(steps_per_interval==max(steps_per_interval)))
+```
+
+ The interval with maximum average steps taken per day is `r max_interval`.  
+
+
+##PArt 4A  
+missing data handling  
+
+```{r missingdata, echo=TRUE}
+
+na_rows <- rawd
+
+na_rows <- is.na(rawd$steps)
+total_na <- sum(na_rows)
+
+# The strategy to fill in the missing data is to use the mean for that 5-minute interval.
+# make a copy of raw data
+
+rawd2 <- rawd
+
+for (ii in 1:length(na_rows)) {
+        
+        if (na_rows[ii]==TRUE) {
+                
+                ps_interval <- rawd$interval[ii]
+                ps_position <- which(names(steps_per_interval)==ps_interval)
+                
+                rawd2$steps[ii] <- steps_per_interval[ps_position][[1]]
+        }
+        
+}
+
+```
+
+The total number of rows with missing data is `r total_na`.  
+
+The strategy to fill in the missing data is to use the mean for that 5-minute interval.  
+
+##PArt 4B
+histogram  
+mean and median  
+
+```{r historaw2, echo=TRUE}
+
+steps_per_day2 <- tapply(rawd2$steps,rawd2$date ,sum )
+
+# plot historgram with 10 intervals
+hist(steps_per_day2,10,col="blue")
+
+# calculate mean and median
+mean_steps2 <- round(mean(steps_per_day2),0)
+median_steps2 <- round(median(steps_per_day2),0)
+```
+
+Mean steps per day is `r mean_steps2`.  
+Median steps per day is `r median_steps2`.  
+
+Mean hasn't changed at all, since all the NAs were for WHOLE days, therefore the missing values were replaced with already calculated mean values from other days. Hence the total mean is unchanged.  
+
+Median has slighly increased leaning towards the mean, but not a big impact. Reason is same as above.  
+
+
+## PArt 5
+Weekdays examination  
+weekday vs weekend  
+
+
+```{r weekdays, echo=TRUE}
+library(lattice)
+
+# add a new columnn indicating weekend or weekday
+rawd2$days <- weekdays(rawd2$date)
+rawd2$days <- ifelse(rawd2$days=="Sunday" | rawd2$days=="Saturday", "weekend","weekday")
+rawd2$days <- as.factor(rawd2$days)
+
+# split data into two and calculate mean per interval
+weekend <- rawd2[rawd2$days=="weekend",]
+weekdays <- rawd2[rawd2$days=="weekday",]
+
+steps_weekend <- (tapply(weekend$steps,weekend$interval ,mean ,na.rm=TRUE))
+steps_weekdays <- (tapply(weekdays$steps,weekdays$interval ,mean ,na.rm=TRUE))
+
+# make them data frame
+steps_weekend <- data.frame(names(steps_weekend),steps_weekend,rep("weekend",length(steps_weekend)))
+steps_weekdays <- data.frame(names(steps_weekdays),steps_weekdays,rep("weekday",length(steps_weekdays)))
+names(steps_weekend) <- c("interval","steps","days")
+names(steps_weekdays) <- c("interval","steps","days")
+
+# join them
+steps_days <- rbind(steps_weekend, steps_weekdays)
+steps_days$interval <- as.numeric(as.character(steps_days$interval))
+
+# see part of the result
+head(steps_days)
+
+# plot pattern
+
+xyplot(steps ~ interval | days, data = steps_days, type="l", layout = c(1, 2),
+       main = "Steps pattern per interval - Mean across all days")
+
+
+```
 
 
 
-## What is mean total number of steps taken per day?
 
-
-
-## What is the average daily activity pattern?
-
-
-
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
