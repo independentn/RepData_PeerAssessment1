@@ -1,0 +1,247 @@
+---
+title: "week2ex"
+author: "Nicholas Metaxas"
+date: "Saturday, October 01, 2016"
+output: html_document
+---
+
+##Assignment for Week 2 coursera course Reproducible Research 
+
+##Part 1
+Loading and preprocessing the data
+
+
+```r
+setwd("C:/Users/NMetaxas/Desktop/Coursera/5. Reproducible Research/week2")
+
+rawd <- read.csv("activity.csv")
+
+# see dimensions, names of columns and structure of the dataset
+dim(rawd)
+```
+
+```
+## [1] 17568     3
+```
+
+```r
+names(rawd)
+```
+
+```
+## [1] "steps"    "date"     "interval"
+```
+
+```r
+str(rawd)
+```
+
+```
+## 'data.frame':	17568 obs. of  3 variables:
+##  $ steps   : int  NA NA NA NA NA NA NA NA NA NA ...
+##  $ date    : Factor w/ 61 levels "2012-10-01","2012-10-02",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
+```
+
+```r
+# dates seems to be off, transform from factors to dates
+
+rawd$date <- as.Date(rawd$date)
+```
+
+##Part 2
+Calculate total steps per day  
+Plot histogram  
+Report mean and median  
+
+
+```r
+steps_per_day <- tapply(rawd$steps,rawd$date ,sum)
+print(as.table(steps_per_day),type="html")
+```
+
+```
+## 2012-10-01 2012-10-02 2012-10-03 2012-10-04 2012-10-05 2012-10-06 
+##                   126      11352      12116      13294      15420 
+## 2012-10-07 2012-10-08 2012-10-09 2012-10-10 2012-10-11 2012-10-12 
+##      11015                 12811       9900      10304      17382 
+## 2012-10-13 2012-10-14 2012-10-15 2012-10-16 2012-10-17 2012-10-18 
+##      12426      15098      10139      15084      13452      10056 
+## 2012-10-19 2012-10-20 2012-10-21 2012-10-22 2012-10-23 2012-10-24 
+##      11829      10395       8821      13460       8918       8355 
+## 2012-10-25 2012-10-26 2012-10-27 2012-10-28 2012-10-29 2012-10-30 
+##       2492       6778      10119      11458       5018       9819 
+## 2012-10-31 2012-11-01 2012-11-02 2012-11-03 2012-11-04 2012-11-05 
+##      15414                 10600      10571                 10439 
+## 2012-11-06 2012-11-07 2012-11-08 2012-11-09 2012-11-10 2012-11-11 
+##       8334      12883       3219                            12608 
+## 2012-11-12 2012-11-13 2012-11-14 2012-11-15 2012-11-16 2012-11-17 
+##      10765       7336                    41       5441      14339 
+## 2012-11-18 2012-11-19 2012-11-20 2012-11-21 2012-11-22 2012-11-23 
+##      15110       8841       4472      12787      20427      21194 
+## 2012-11-24 2012-11-25 2012-11-26 2012-11-27 2012-11-28 2012-11-29 
+##      14478      11834      11162      13646      10183       7047 
+## 2012-11-30 
+## 
+```
+
+```r
+# plot historgram with 10 intervals
+hist(steps_per_day,10,col="red")
+```
+
+![plot of chunk meansteps](figure/meansteps-1.png)
+
+```r
+# calculate mean and median
+mean_steps <- mean(steps_per_day,na.rm=TRUE)
+median_steps <- median(steps_per_day,na.rm=TRUE)
+```
+
+Mean steps per day is 1.0766189 &times; 10<sup>4</sup>.   
+Median steps per day is 10765.  
+
+##Part 3
+Plot steps for each 5 minute interval  
+Find max steps interval  
+
+
+
+```r
+# get sum of steps per interval for all days
+steps_per_interval <- (tapply(rawd$steps,rawd$interval ,mean ,na.rm=TRUE))
+
+# plot pattern
+
+plot(y=steps_per_interval,x=names(steps_per_interval), type="l",
+     xlab="5-minute intervals",ylab="steps per interval")
+title("Steps pattern per interval - Mean across all days")
+```
+
+![plot of chunk interval](figure/interval-1.png)
+
+```r
+# get max
+max_interval <- names(which(steps_per_interval==max(steps_per_interval)))
+```
+
+ The interval with maximum average steps taken per day is 835.  
+
+
+##PArt 4A  
+missing data handling  
+
+
+```r
+na_rows <- rawd
+
+na_rows <- is.na(rawd$steps)
+total_na <- sum(na_rows)
+
+# The strategy to fill in the missing data is to use the mean for that 5-minute interval.
+# make a copy of raw data
+
+rawd2 <- rawd
+
+for (ii in 1:length(na_rows)) {
+        
+        if (na_rows[ii]==TRUE) {
+                
+                ps_interval <- rawd$interval[ii]
+                ps_position <- which(names(steps_per_interval)==ps_interval)
+                
+                rawd2$steps[ii] <- steps_per_interval[ps_position][[1]]
+        }
+        
+}
+```
+
+The total number of rows with missing data is 2304.  
+
+The strategy to fill in the missing data is to use the mean for that 5-minute interval.  
+
+##PArt 4B
+histogram  
+mean and median  
+
+
+```r
+steps_per_day2 <- tapply(rawd2$steps,rawd2$date ,sum )
+
+# plot historgram with 10 intervals
+hist(steps_per_day2,10,col="blue")
+```
+
+![plot of chunk historaw2](figure/historaw2-1.png)
+
+```r
+# calculate mean and median
+mean_steps2 <- round(mean(steps_per_day2),0)
+median_steps2 <- round(median(steps_per_day2),0)
+```
+
+Mean steps per day is 1.0766 &times; 10<sup>4</sup>.  
+Median steps per day is 1.0766 &times; 10<sup>4</sup>.  
+
+Mean hasn't changed at all, since all the NAs were for WHOLE days, therefore the missing values were replaced with already calculated mean values from other days. Hence the total mean is unchanged.  
+
+Median has slighly increased leaning towards the mean, but not a big impact. Reason is same as above.  
+
+
+## PArt 5
+Weekdays examination  
+weekday vs weekend  
+
+
+
+```r
+library(lattice)
+
+# add a new columnn indicating weekend or weekday
+rawd2$days <- weekdays(rawd2$date)
+rawd2$days <- ifelse(rawd2$days=="Sunday" | rawd2$days=="Saturday", "weekend","weekday")
+rawd2$days <- as.factor(rawd2$days)
+
+# split data into two and calculate mean per interval
+weekend <- rawd2[rawd2$days=="weekend",]
+weekdays <- rawd2[rawd2$days=="weekday",]
+
+steps_weekend <- (tapply(weekend$steps,weekend$interval ,mean ,na.rm=TRUE))
+steps_weekdays <- (tapply(weekdays$steps,weekdays$interval ,mean ,na.rm=TRUE))
+
+# make them data frame
+steps_weekend <- data.frame(names(steps_weekend),steps_weekend,rep("weekend",length(steps_weekend)))
+steps_weekdays <- data.frame(names(steps_weekdays),steps_weekdays,rep("weekday",length(steps_weekdays)))
+names(steps_weekend) <- c("interval","steps","days")
+names(steps_weekdays) <- c("interval","steps","days")
+
+# join them
+steps_days <- rbind(steps_weekend, steps_weekdays)
+steps_days$interval <- as.numeric(as.character(steps_days$interval))
+
+# see part of the result
+head(steps_days)
+```
+
+```
+##    interval       steps    days
+## 0         0 0.214622642 weekend
+## 5         5 0.042452830 weekend
+## 10       10 0.016509434 weekend
+## 15       15 0.018867925 weekend
+## 20       20 0.009433962 weekend
+## 25       25 3.511792453 weekend
+```
+
+```r
+# plot pattern
+
+xyplot(steps ~ interval | days, data = steps_days, type="l", layout = c(1, 2),
+       main = "Steps pattern per interval - Mean across all days")
+```
+
+![plot of chunk weekdays](figure/weekdays-1.png)
+
+
+
+
