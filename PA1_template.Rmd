@@ -11,8 +11,8 @@ output: html_document
 Loading and preprocessing the data
 
 ```{r loadprocess, echo=TRUE}
-
-setwd("C:/Users/NMetaxas/Desktop/Coursera/5. Reproducible Research/week2")
+# set working directory where the file activity is
+#setwd("C:/Users/...")
 
 rawd <- read.csv("activity.csv")
 
@@ -35,10 +35,12 @@ Report mean and median
 ```{r meansteps, echo=TRUE,fig.path ='figure/'}
 
 steps_per_day <- tapply(rawd$steps,rawd$date ,sum)
+
 print(as.table(steps_per_day),type="html")
+# note that NAs are ignored here and therefore are not set to zero!
 
 # plot historgram with 10 intervals
-hist(steps_per_day,10,col="red")
+hist(steps_per_day,10,col="red",xlab="Steps per day")
 
 # calculate mean and median
 mean_steps <- mean(steps_per_day,na.rm=TRUE)
@@ -67,7 +69,7 @@ title("Steps pattern per interval - Mean across all days")
 max_interval <- names(which(steps_per_interval==max(steps_per_interval)))
 ```
 
- The interval with maximum average steps taken per day is `r max_interval`.  
+ The interval with maximum average steps taken per day is `r max_interval`. i.e. at 8:35 morning.  
 
 
 ##PArt 4A  
@@ -103,6 +105,8 @@ The total number of rows with missing data is `r total_na`.
 
 The strategy to fill in the missing data is to use the mean for that 5-minute interval.  
 
+The updated dataset is saved as rawd2.
+
 ##PArt 4B
 histogram  
 mean and median  
@@ -112,20 +116,41 @@ mean and median
 steps_per_day2 <- tapply(rawd2$steps,rawd2$date ,sum )
 
 # plot historgram with 10 intervals
-hist(steps_per_day2,10,col="blue")
+hist(steps_per_day2,10,col="blue",xlab="Steps per day")
+
+# let's compare this with previous histogram
+par(mfrow=c(1,2))
+hist(steps_per_day,10,col="red",ylim=c(0,20),main="Original Data",xlab="Steps per day")
+hist(steps_per_day2,10,col="blue",ylim=c(0,20),main="Updated Data",xlab="Steps per day")
+
+# more steps are registered towards the middle of the histogram
+# this is expected since the strategy was to fill missing data with the mean.
 
 # calculate mean and median
-mean_steps2 <- round(mean(steps_per_day2),0)
-median_steps2 <- round(median(steps_per_day2),0)
+mean_steps2   <- mean(steps_per_day2)
+median_steps2 <- median(steps_per_day2)
+
 ```
 
-Mean steps per day is `r mean_steps2`.  
-Median steps per day is `r median_steps2`.  
+Mean steps per day with updated data is `r mean_steps2`.  
+Median steps per day with updated data is `r median_steps2`.  
 
-Mean hasn't changed at all, since all the NAs were for WHOLE days, therefore the missing values were replaced with already calculated mean values from other days. Hence the total mean is unchanged.  
+Mean before updating data was `r mean_steps`.    
+Median before updating data was `r median_steps`.  
+
+Mean hasn't changed at all, since all the NAs were for WHOLE days, therefore the missing values were  
+replaced with already calculated mean values from other days. Hence the total mean is unchanged.  
 
 Median has slighly increased leaning towards the mean, but not a big impact. Reason is same as above.  
 
+
+```{r printnewdata, echo=TRUE}
+print(as.table(steps_per_day2),type="html")
+
+# New steps per day can be seen above. The impact is that the sum of total steps is obviously higher now
+# Also, you can see that days where there was no steps registered before, are now filled with steps.
+
+```
 
 ## PArt 5
 Weekdays examination  
@@ -139,6 +164,10 @@ library(lattice)
 rawd2$days <- weekdays(rawd2$date)
 rawd2$days <- ifelse(rawd2$days=="Sunday" | rawd2$days=="Saturday", "weekend","weekday")
 rawd2$days <- as.factor(rawd2$days)
+
+# Let's see the new variable
+head(rawd2)
+str(rawd2$days)
 
 # split data into two and calculate mean per interval
 weekend <- rawd2[rawd2$days=="weekend",]
@@ -167,7 +196,6 @@ xyplot(steps ~ interval | days, data = steps_days, type="l", layout = c(1, 2),
 
 
 ```
-
 
 
 
